@@ -1,0 +1,11 @@
+streamlit
+openai
+python-dotenv
+edge-tts
+edge-tts
+asyncio
+transformers
+torch
+pillow
+timm
+einops
