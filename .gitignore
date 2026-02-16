@@ -1,0 +1,17 @@
+# Environment variables (Crucial for security)
+.env
+
+# Python compilation files
+__pycache__/
+*.pyc
+
+# Distribution / PyInstaller
+build/
+dist/
+*.spec
+
+# Jupyter Notebook leftovers
+.ipynb_checkpoints
+
+# VS Code settings (optional, good practice)
+.vscode/
