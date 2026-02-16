@@ -1,6 +1,12 @@
 # Environment variables (Crucial for security)
 .env
 
+# macOS
+.DS_Store
+
+# Generated audio
+*.mp3
+
 # Python compilation files
 __pycache__/
 *.pyc
