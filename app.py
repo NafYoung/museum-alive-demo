@@ -10,94 +10,83 @@ load_dotenv()
 
 # Page Config
 st.set_page_config(page_title="Museum Alive", page_icon="🏛️")
-st.title("🏛️ Museum Alive: Let Artifacts Speak")
-st.caption("✨ Cloud Edition: Artifact Storytelling & Voice Synthesis")
+st.title("🏛️ Museum Alive")
+st.caption("输入文物名称，AI 唤醒它的灵魂 ✨")
 
 # Sidebar Settings
 with st.sidebar:
-    st.header("Settings")
+    st.header("⚙️ Settings")
     api_key = os.getenv("DEEPSEEK_API_KEY")
     if not api_key:
-        st.warning("⚠️ Please set DEEPSEEK_API_KEY in .env")
+        st.error("⚠️ DEEPSEEK_API_KEY missing!")
+        st.stop()
     else:
-        st.success("✅ API Key Loaded")
+        st.success("✅ AI Connected")
     
     st.markdown("---")
-    st.info("ℹ️ **Note:** This is the Cloud version. AI Vision is disabled to ensure fast performance. Please manually enter the artifact name.")
+    st.markdown("**🧠 DeepSeek-V3** · Text Generation")
+    st.markdown("**🗣️ Edge-TTS** · Voice Synthesis")
 
 # Initialize DeepSeek Client
-try:
-    client = OpenAI(
-        api_key=api_key,
-        base_url="https://api.deepseek.com"
-    )
-except Exception as e:
-    st.error(f"Failed to initialize AI client: {e}")
+client = OpenAI(
+    api_key=api_key,
+    base_url="https://api.deepseek.com"
+)
 
 # --- Core Functions ---
 
 async def generate_audio(text, output_file="output.mp3"):
-    """Generate audio using Edge-TTS (Free)"""
-    try:
-        # Use a high-quality Chinese voice
-        communicate = edge_tts.Communicate(text, "zh-CN-YunxiNeural")
-        await communicate.save(output_file)
-    except Exception as e:
-        st.error(f"Audio generation failed: {e}")
+    """Generate audio using Edge-TTS"""
+    communicate = edge_tts.Communicate(text, "zh-CN-YunxiNeural")
+    await communicate.save(output_file)
 
 def get_artifact_story(artifact_name):
-    """Ask DeepSeek to roleplay based on artifact name"""
+    """Ask DeepSeek to roleplay as this artifact"""
     prompt = f"""
-    The user is looking at a museum artifact named: "{artifact_name}".
+    你是一件名为「{artifact_name}」的文物/历史遗迹，刚刚被唤醒。
     
-    Please roleplay as this artifact.
-    1. Start with a captivating hook.
-    2. Describe your history and significance in the first person ("I").
-    3. Keep it engaging, educational, and under 150 words.
-    4. Language: Chinese (Mandarin).
+    请用第一人称（"我"）做一个自我介绍。
+    
+    要求：
+    1. 开头要吸引人，像是沉睡千年刚苏醒。
+    2. 讲你的历史、故事和感受，不要只说枯燥的数据。
+    3. 语气符合你的身份（古代青铜器要庄重，兵马俑可以幽默）。
+    4. 篇幅控制在 150 字以内。
     """
     
     try:
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[
-                {"role": "system", "content": "You are a sentient museum artifact with a distinct personality."},
+                {"role": "system", "content": "你是一个博物馆里的文物或历史遗迹，富有性格和情感。"},
                 {"role": "user", "content": prompt},
             ],
             stream=False
         )
         return response.choices[0].message.content
     except Exception as e:
-        return f"I am unable to speak right now... (Error: {str(e)})"
+        return f"我好像还没完全醒过来... ({str(e)})"
 
 # --- Main UI ---
 
-# 1. Image Upload (Display Only)
-uploaded_file = st.file_uploader("📸 Upload Artifact Photo (Optional)", type=["jpg", "png", "jpeg"])
-if uploaded_file:
-    st.image(uploaded_file, caption="Artifact Preview", use_container_width=True)
+artifact_name = st.text_input(
+    "🔮 输入文物名称",
+    placeholder="例如：三星堆青铜面具、四行仓库、清明上河图..."
+)
 
-# 2. Input
-artifact_name = st.text_input("💡 What is this artifact?", placeholder="e.g., Bronze Mask of Sanxingdui / 三星堆青铜面具")
-
-# 3. Action
-if artifact_name and st.button("Let it Speak 🗣️"):
-    if not api_key:
-        st.error("Please configure your API Key first!")
-    else:
-        with st.spinner("The artifact is waking up..."):
-            # A. Generate Story
-            story = get_artifact_story(artifact_name)
-            
-            # Display Story
-            st.markdown("### 📜 The Artifact Says:")
-            # Use a nice container for the text
-            st.info(story)
-            
-            # B. Generate & Play Audio
-            output_file = "artifact_voice.mp3"
-            asyncio.run(generate_audio(story, output_file))
-            
-            if os.path.exists(output_file):
-                st.audio(output_file)
-                st.success("🎉 Voice generated successfully!")
+if artifact_name and st.button("唤醒 🗣️", type="primary", use_container_width=True):
+    with st.spinner("正在唤醒沉睡的灵魂..."):
+        # Generate Story
+        story = get_artifact_story(artifact_name)
+        
+        # Display
+        st.markdown(f"### 📜「{artifact_name}」说：")
+        st.info(story)
+        
+        # Generate & Play Audio
+        output_file = "artifact_voice.mp3"
+        asyncio.run(generate_audio(story, output_file))
+        
+        if os.path.exists(output_file):
+            st.audio(output_file, autoplay=True)
+            st.success("🎉 语音生成成功！")
